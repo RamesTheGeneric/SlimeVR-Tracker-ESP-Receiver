@@ -82,10 +82,14 @@ void setup() {
         Serial.println("New tracker paired");
         led.sendBlinks(3, 0.1f);
         });
+
+    static std::map<uint8_t, uint8_t> registeredExtensions;
+
     espnow.onTrackerConnected(
         [&](uint8_t trackerId, const uint8_t *trackerMacAddress) {
             Serial.println("New tracker connected");
             led.sendBlinks(2, 0.1f);
+            registeredExtensions.clear();
             uint8_t packet[16];
             packet[0] = 0xff;
             packet[1] = trackerId << 2;
@@ -109,7 +113,6 @@ void setup() {
             });
 
     // New callback with MAC for extension registration
-    static std::map<uint8_t, uint8_t> registeredExtensions;
     espnow.onPacketReceivedWithMac(
             [&](const uint8_t packet[ESPNowCommunication::packetSizeBytes], const uint8_t *mac) {
                 uint8_t sensorId = packet[1];
@@ -125,8 +128,10 @@ void setup() {
                         Serial.printf("Registering extension for tracker %d, sensorIdx %d\n", trackerId, sensorIndex);
                         uint8_t regPacket[16];
                         regPacket[0] = 0xff;
-                        regPacket[1] = sensorId;  // Use sensorId directly so server knows it's extension
+                        regPacket[1] = sensorId;
+                        // Create virtual MAC by toggling last byte - server sees this as a distinct device
                         memcpy(&regPacket[2], mac, 6);
+                        regPacket[7] ^= 0x01;  // Toggle LSB to create unique identifier
                         memset(&regPacket[8], 0, 8);
                         PacketHandling::getInstance().insert(regPacket);
                     }
