@@ -10,6 +10,7 @@
 #include <Arduino.h>
 #include <USB.h>
 #include <USBCDC.h>
+#include <map>
 
 
 /*
@@ -95,7 +96,41 @@ void setup() {
 
     espnow.onPacketReceived(
             [&](const uint8_t packet[ESPNowCommunication::packetSizeBytes]) {
-                //debugPacket(packet);
+                // Debug: Show packet info
+                uint8_t packetType = packet[0];
+                uint8_t sensorId = packet[1];
+                uint8_t trackerId = sensorId >> 2;
+                uint8_t sensorIndex = sensorId & 0x03;
+                const char* typeStr = (packetType == 0) ? "DeviceInfo" : 
+                                     (packetType == 1) ? "FullSizeFusion" : "Unknown";
+                Serial.printf("Packet: type=%s(%d), sensorId=%d, trackerId=%d, sensorIdx=%d\n",
+                    typeStr, packetType, sensorId, trackerId, sensorIndex);
+                PacketHandling::getInstance().insert(packet);
+            });
+
+    // New callback with MAC for extension registration
+    static std::map<uint8_t, uint8_t> registeredExtensions;
+    espnow.onPacketReceivedWithMac(
+            [&](const uint8_t packet[ESPNowCommunication::packetSizeBytes], const uint8_t *mac) {
+                uint8_t sensorId = packet[1];
+                uint8_t trackerId = sensorId >> 2;
+                uint8_t sensorIndex = sensorId & 0x03;
+                
+                // Send registration packet for extension (sensorIndex=1) when we see DeviceInfo (packetType=0)
+                if (sensorIndex == 1 && packet[0] == 0) {
+                    // Check if we already registered this extension
+                    uint8_t key = (trackerId << 1) | sensorIndex;
+                    if (registeredExtensions.find(key) == registeredExtensions.end()) {
+                        registeredExtensions[key] = 1;
+                        Serial.printf("Registering extension for tracker %d, sensorIdx %d\n", trackerId, sensorIndex);
+                        uint8_t regPacket[16];
+                        regPacket[0] = 0xff;
+                        regPacket[1] = sensorId;  // Use sensorId directly so server knows it's extension
+                        memcpy(&regPacket[2], mac, 6);
+                        memset(&regPacket[8], 0, 8);
+                        PacketHandling::getInstance().insert(regPacket);
+                    }
+                }
                 PacketHandling::getInstance().insert(packet);
             });
     Serial.println("Boot complete");

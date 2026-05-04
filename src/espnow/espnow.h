@@ -27,6 +27,8 @@ public:
             std::function<void(uint8_t, const uint8_t *)> callback);
     void onPacketReceived(
             std::function<void(const uint8_t data[packetSizeBytes])> callback);
+    void onPacketReceivedWithMac(
+            std::function<void(const uint8_t data[packetSizeBytes], const uint8_t *mac)> callback);
 
 private:
     ESPNowCommunication() = default;
@@ -52,6 +54,10 @@ private:
             trackerConnectedCallbacks;
     std::vector<std::function<void(const uint8_t data[packetSizeBytes])>>
             packetReceivedCallbacks;
+    std::vector<std::function<void(const uint8_t data[packetSizeBytes], const uint8_t *)>>
+            packetReceivedWithMacCallbacks;
+
+    void invokePacketReceivedEventWithMac(const uint8_t data[packetSizeBytes], const uint8_t *mac);
 
     static constexpr uint8_t broadcastAddress[6]{0xff,
                                                  0xff,

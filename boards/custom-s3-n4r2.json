@@ -9,14 +9,12 @@
     "usb_mode": "0",
     "extra_flags": [
       "-DCUSTOM_S3_N4R2",
-      "-DBOARD_HAS_PSRAM",
-      "-DARDUINO_USB_CDC_ON_BOOT=1",
+      "-DARDUINO_USB_CDC_ON_BOOT=0",
       "-DARDUINO_USB_MODE=0"
     ],
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
     "flash_mode": "qio",
-    "psram_type": "opi",
     "hwids": [
       [
         "0x1209",

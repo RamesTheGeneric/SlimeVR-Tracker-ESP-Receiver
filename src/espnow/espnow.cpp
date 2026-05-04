@@ -65,6 +65,11 @@ void ESPNowCommunication::onPacketReceived(
     packetReceivedCallbacks.push_back(callback);
 }
 
+void ESPNowCommunication::onPacketReceivedWithMac(
+        std::function<void(const uint8_t data[packetSizeBytes], const uint8_t *)> callback) {
+    packetReceivedWithMacCallbacks.push_back(callback);
+}
+
 void ESPNowCommunication::invokeTrackerPairedEvent() {
     for (auto &callback : trackerPairedCallbacks) {
         callback();
@@ -83,6 +88,14 @@ void ESPNowCommunication::invokePacketReceivedEvent(
         const uint8_t data[packetSizeBytes]) {
     for (auto &callback : packetReceivedCallbacks) {
         callback(data);
+    }
+}
+
+void ESPNowCommunication::invokePacketReceivedEventWithMac(
+        const uint8_t data[packetSizeBytes],
+        const uint8_t *mac) {
+    for (auto &callback : packetReceivedWithMacCallbacks) {
+        callback(data, mac);
     }
 }
 
@@ -142,6 +155,7 @@ void ESPNowCommunication::handleMessage(const esp_now_recv_info_t *senderInfo,
     case ESPNowMessageHeader::Packet:
         const uint8_t *packet = data + offsetof(ESPNowPacketMessage, data);
         invokePacketReceivedEvent(packet);
+        invokePacketReceivedEventWithMac(packet, senderInfo->src_addr);
         break;
     }
 }
