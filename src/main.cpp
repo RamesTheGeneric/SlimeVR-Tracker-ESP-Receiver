@@ -106,6 +106,10 @@ void setup() {
                 
                 PacketHandling::getInstance().insert(packet);
                 
+                if (packet[0] == 0xff) {
+                    PacketHandling::getInstance().tick(hidDevice);
+                }
+                
                 if (packet[0] == 0) {
                     uint8_t extKey = (trackerId << 1) | 1;
                     if (registeredExtensions.find(extKey) == registeredExtensions.end()) {
@@ -118,6 +122,7 @@ void setup() {
                         regPacket[7] ^= 0x01;
                         memset(&regPacket[8], 0, 8);
                         PacketHandling::getInstance().insert(regPacket);
+                        PacketHandling::getInstance().tick(hidDevice);
                     }
                 }
             });
@@ -128,5 +133,10 @@ void loop() {
     button.update();
     led.update();
 
-    PacketHandling::getInstance().tick(hidDevice);
+    static unsigned long lastTick = 0;
+    unsigned long now = millis();
+    if (now - lastTick >= 4) {
+        lastTick = now;
+        PacketHandling::getInstance().tick(hidDevice);
+    }
 }

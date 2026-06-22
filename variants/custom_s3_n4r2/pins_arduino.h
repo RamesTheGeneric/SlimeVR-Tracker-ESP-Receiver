@@ -22,7 +22,7 @@ static const uint8_t LED_BUILTIN = 38;
 #define LED_BUILTIN LED_BUILTIN // allow testing #ifdef LED_BUILTIN
 static const bool LED_ACTIVE_LEVEL = false;
 
-static const uint8_t USER_BUTTON = 3;
+static const uint8_t USER_BUTTON = 0;
 static const bool USER_BUTTON_ACTIVE_LEVEL = false;
 
 #endif /* Pins_Arduino_h */

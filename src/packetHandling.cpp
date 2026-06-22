@@ -16,7 +16,7 @@ void PacketHandling::tick(HIDDevice &hidDevice) {
         return;
     }
 
-    if (buffer.size() < 4) {
+    if (buffer.size() < 2) {
         return;
     }
 
